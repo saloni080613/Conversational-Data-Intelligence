@@ -1,3 +1,4 @@
+import requests
 from openai import OpenAI
 from config import (
     LM_STUDIO_URL,
@@ -16,6 +17,14 @@ client = OpenAI(
 
 def check_server_health() -> dict:
     try:
+        r = requests.get(
+            f"{LM_STUDIO_URL}/models",
+            timeout=5
+        )
+        if r.status_code == 200:
+            models = [m["id"] for m in r.json().get("data", [])]
+            return {"status": "online", "models": models}
+        return {"status": "error", "models": []}
         resp = client.models.list(timeout=5)
         models = [m.id for m in resp.data]
         return {"status": "online", "models": models}
