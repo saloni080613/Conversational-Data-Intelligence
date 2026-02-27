@@ -13,13 +13,28 @@ def _extract_code(raw: str) -> str:
     return "\n".join(lines).strip()
 
 
+# Safe subset of builtins — enough for pandas code, no file/network access
+_SAFE_BUILTINS = {
+    "len": len, "str": str, "int": int, "float": float, "bool": bool,
+    "list": list, "dict": dict, "tuple": tuple, "set": set,
+    "range": range, "enumerate": enumerate, "zip": zip, "map": map,
+    "filter": filter, "sorted": sorted, "reversed": reversed,
+    "min": min, "max": max, "sum": sum, "abs": abs, "round": round,
+    "any": any, "all": all, "isinstance": isinstance, "type": type,
+    "print": print, "repr": repr, "hasattr": hasattr, "getattr": getattr,
+    "ValueError": ValueError, "TypeError": TypeError, "KeyError": KeyError,
+    "True": True, "False": False, "None": None,
+}
+
+
 def _safe_exec(code: str, df: pd.DataFrame):
-    local = {"df": df, "pd": pd}
+    import numpy as np
+    local = {"df": df, "pd": pd, "np": np}
     try:
-        exec(code, {"__builtins__": {}}, local)
+        exec(code, {"__builtins__": _SAFE_BUILTINS}, local)
         if "result" in local:
             return local["result"], None
-        user_vars = [k for k in local if k not in ("df", "pd")]
+        user_vars = [k for k in local if k not in ("df", "pd", "np")]
         if user_vars:
             return local[user_vars[-1]], None
         return None, "No result variable found"
@@ -71,24 +86,29 @@ Write simpler corrected code.
 
     if error or result is None:
         return {
-            "answer"      : "Could not compute an answer.",
+            "answer"      : "I wasn't able to compute an answer for that question. Could you try rephrasing it?",
+            "raw_result"  : None,
             "code"        : code,
             "explanation" : f"Error: {error}",
             "chart"       : None
         }
 
     explain = generate_explanation(
-        system="Explain data results in one clear sentence.",
+        system="You are a data analyst explaining results to a business manager. Be concise, use plain English, and include specific numbers from the result.",
         user=f"""
 Question: "{question}"
-Code that ran: {code}
-Result: {str(result)[:400]}
-Write ONE sentence explaining this result with actual numbers.
+Pandas code that ran: {code}
+Raw result: {str(result)[:500]}
+
+Write 2-3 sentences explaining this finding in natural language.
+Include actual numbers and percentages from the result.
+Do NOT mention code, pandas, or DataFrames — speak as if you analyzed it yourself.
 """
     )
 
     return {
-        "answer"      : str(result)[:300],
+        "answer"      : explain,
+        "raw_result"  : str(result)[:300],
         "code"        : code,
         "explanation" : explain,
         "chart"       : auto_chart(question, result, df)
@@ -102,16 +122,20 @@ def run_auto_insights(df: pd.DataFrame) -> list:
         try:
             out = answer_question(df, q, [])
             insights.append({
-                "icon"  : ICONS[i],
-                "title" : q[:38] + "..." if len(q) > 38 else q,
-                "value" : str(out["answer"])[:60],
-                "detail": str(out["explanation"])[:80],
+                "icon"       : ICONS[i],
+                "question"   : q,
+                "answer"     : str(out["answer"])[:120],
+                "explanation": str(out["explanation"])[:160],
+                "code"       : out.get("code", ""),
+                "chart"      : out.get("chart"),
             })
         except Exception as e:
             insights.append({
-                "icon"  : ICONS[i],
-                "title" : q[:38],
-                "value" : "Could not compute",
-                "detail": str(e)[:60],
+                "icon"       : ICONS[i],
+                "question"   : q,
+                "answer"     : "Could not compute",
+                "explanation": str(e)[:100],
+                "code"       : "",
+                "chart"      : None,
             })
     return insights

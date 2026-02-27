@@ -25,9 +25,6 @@ def check_server_health() -> dict:
             models = [m["id"] for m in r.json().get("data", [])]
             return {"status": "online", "models": models}
         return {"status": "error", "models": []}
-        resp = client.models.list(timeout=5)
-        models = [m.id for m in resp.data]
-        return {"status": "online", "models": models}
     except Exception as e:
         return {"status": "offline", "error": str(e)}
 

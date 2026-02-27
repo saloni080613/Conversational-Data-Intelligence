@@ -7,7 +7,7 @@ PAGE_CONFIG = dict(
     initial_sidebar_state="collapsed",
 )
 
-LAYOUT_RATIO = [2.2, 5, 2.8]
+LAYOUT_RATIO = [1.8, 5.4, 2.8]
 
 SESSION_DEFAULTS = {
     "df":             None,
@@ -107,30 +107,52 @@ CUSTOM_CSS = """
 /* ═══════════════════════════════════════════════
    STREAMLIT OVERRIDES — full-bleed, zero chrome
 ═══════════════════════════════════════════════ */
-body, .stApp { background: var(--bg) !important; }
+body, .stApp {
+  background: var(--bg) !important;
+  width: 100vw !important;
+  max-width: 100vw !important;
+  height: 100vh !important;
+  overflow: hidden !important;
+}
 
+.main, .main > div {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+}
 .main .block-container {
   padding: 0 !important;
   max-width: 100% !important;
+  width: 100% !important;
   margin: 0 !important;
 }
-[data-testid="stAppViewBlockContainer"] { padding: 0 !important; }
+[data-testid="stAppViewBlockContainer"] {
+  padding: 0 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
 [data-testid="stHeader"],
 [data-testid="stDecoration"],
 [data-testid="stToolbar"],
 #MainMenu { display: none !important; }
 
 [data-testid="stHorizontalBlock"] {
-  align-items: flex-start !important;
+  align-items: stretch !important;
   gap: 0 !important;
   flex-wrap: nowrap !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+  height: 100vh !important;
+  overflow: hidden !important;
 }
 /* Column containers — base */
 [data-testid="stColumn"] {
   padding: 0 !important;
   margin: 0 !important;
-  min-height: 100vh !important;
-  position: relative !important;
+  height: 100vh !important;
+  overflow: hidden !important;
 }
 
 /* Inner content wrapper that Streamlit uses */
